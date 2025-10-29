@@ -82,17 +82,18 @@ export default function DesignPage() {
   const { bounds } = config;
 
   const preferenceCurves = useMemo(() => {
-    return (config.OBJECTIVE_KEYS as ObjectiveKey[]).map((objective) => {
-      const { x: domain } = config.knots[objective];
+    return config.OBJECTIVE_KEYS.map((objective) => {
+      const objectiveKey = objective as ObjectiveKey;
+      const { x: domain } = config.knots[objectiveKey];
       const min = domain[0];
       const max = domain[domain.length - 1];
       const steps = 120;
       const samples = Array.from({ length: steps + 1 }, (_, idx) => {
         const value = min + (idx / steps) * (max - min);
-        const preference = prefFns[objective]?.(value) ?? 0;
+        const preference = prefFns[objectiveKey]?.(value) ?? 0;
         return { metric: value, preference };
       });
-      return { objective, min, max, samples };
+      return { objective: objectiveKey, min, max, samples };
     });
   }, [config.OBJECTIVE_KEYS, config.knots, prefFns]);
 

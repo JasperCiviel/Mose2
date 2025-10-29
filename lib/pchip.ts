@@ -1,4 +1,4 @@
-export function pchip(xKnots: number[], yKnots: number[]) {
+export function pchip(xKnots: readonly number[], yKnots: readonly number[]) {
   if (xKnots.length !== yKnots.length) {
     throw new Error('x and y knot arrays must be the same length');
   }

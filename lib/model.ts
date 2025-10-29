@@ -54,7 +54,7 @@ export function clampToObjective(key: ObjectiveKey, value: number) {
 export function computeMetrics(design: DesignVector, _scenario: ScenarioSettings = defaultScenario): Metrics {
   const { constants } = defaultConfig;
   const { x1, x2, x3 } = design;
-  const totalLength = constants.TOTAL_LENGTH;
+  const totalLength = Number(constants.TOTAL_LENGTH);
   const minClosing = Math.max(x3, constants.MIN_CLOSING_TIME);
 
   const movableLength = Math.max(0, Math.min(x1, totalLength));
@@ -105,7 +105,7 @@ export function toPreferences(metrics: Metrics, prefFns: Record<ObjectiveKey, (v
   ) as Preferences;
 }
 
-export function normalizeStakeholders(data: StakeholderDatum[]) {
+export function normalizeStakeholders(data: readonly StakeholderDatum[]) {
   const names = data.map((d) => d.name);
   const influenceSum = data.reduce((sum, d) => sum + d.influence, 0);
   const weights = data.map((d) => (influenceSum === 0 ? 0 : d.influence / influenceSum));

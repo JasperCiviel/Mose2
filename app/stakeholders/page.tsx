@@ -84,17 +84,17 @@ export default function StakeholdersPage() {
   );
 
   const stakeholderSummary = useMemo(() => {
-    return stakeholderNames.map((name, idx) => {
+    return stakeholderNames.map((name: string, idx: number) => {
       const narrative = stakeholderNarratives.find((item) => item.name === name);
       const weightsRow = stakeholderObjectiveWeights[idx] ?? [];
       const topObjectives = objectives
-        .map((objective, objectiveIdx) => ({
+        .map((objective: (typeof objectives)[number], objectiveIdx: number) => ({
           objective,
           weight: weightsRow[objectiveIdx] ?? 0
         }))
         .sort((a, b) => b.weight - a.weight)
         .slice(0, 2)
-        .map((item) => item.objective.replace(/_/g, ' '));
+        .map((item: { objective: string }) => item.objective.replace(/_/g, ' '));
       return {
         name,
         role: narrative?.role ?? '',
@@ -119,7 +119,7 @@ export default function StakeholdersPage() {
 
       <section className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {featureStakeholders.map((stakeholder) => {
+          {featureStakeholders.map((stakeholder: (typeof featureStakeholders)[number]) => {
             const isActive = activeStakeholder.id === stakeholder.id;
             return (
               <button
@@ -164,7 +164,15 @@ export default function StakeholdersPage() {
           so you can explore different influence mixes there.
         </p>
         <div className="grid gap-6 md:grid-cols-2">
-          {stakeholderSummary.map((stakeholder) => (
+          {stakeholderSummary.map((stakeholder: {
+            name: string;
+            role: string;
+            focus: string;
+            involvement: string;
+            stakes: string;
+            tension: string;
+            topObjectives: string[];
+          }) => (
             <article key={stakeholder.name} className="rounded-2xl border border-slate-100 p-5 space-y-3">
               <div className="flex flex-col gap-1">
                 <h2 className="text-lg font-semibold text-slate-800">{stakeholder.name}</h2>
@@ -179,7 +187,7 @@ export default function StakeholdersPage() {
               <div>
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Primary objectives</p>
                 <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-slate-500">
-                  {stakeholder.topObjectives.map((objective) => (
+                  {stakeholder.topObjectives.map((objective: string) => (
                     <li key={objective}>{objective}</li>
                   ))}
                 </ul>

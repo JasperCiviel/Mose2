@@ -137,7 +137,7 @@ export default function OptimizationPage() {
     setStakeholderInfluences
   } = useMoseStore();
 
-  const objectives = config.OBJECTIVE_KEYS as ObjectiveKey[];
+  const objectives = config.OBJECTIVE_KEYS.slice() as ObjectiveKey[];
 
   const buildResult = (design: DesignVector, metrics: MetricSet): StaticResult => {
     const preferences = {} as Record<ObjectiveKey, number>;
@@ -472,7 +472,7 @@ export default function OptimizationPage() {
           <div className="rounded-xl bg-slate-50 p-4">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Normalised influence</h3>
             <ul className="mt-3 space-y-2 text-sm text-slate-600">
-              {stakeholderNames.map((name, idx) => (
+              {stakeholderNames.map((name: string, idx: number) => (
                 <li key={name} className="flex items-baseline justify-between gap-4">
                   <span className="font-medium text-slate-700">{name}</span>
                   <span>{(stakeholderWeights[idx] * 100).toFixed(1)}%</span>
@@ -582,7 +582,7 @@ export default function OptimizationPage() {
           Run the GA with a single stakeholder set to 100% influence. This mirrors a sensitivity sweep where the other groups momentarily step back.
         </p>
         <div className="grid gap-4 md:grid-cols-2">
-          {stakeholderNames.map((name) => {
+          {stakeholderNames.map((name: string) => {
             const result = soloResultsState[name] ?? null;
             const waiting = false;
             return (

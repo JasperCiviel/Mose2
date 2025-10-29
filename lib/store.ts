@@ -9,6 +9,7 @@ import {
   defaultScenario,
   GAHistoryRecord,
   Metrics,
+  ObjectiveKey,
   Preferences,
   ScenarioSettings,
   objectiveColors,
@@ -21,7 +22,7 @@ interface StoreState {
   config: typeof defaultConfig;
   design: DesignVector;
   scenario: ScenarioSettings;
-  prefFns: Record<string, (value: number) => number>;
+  prefFns: Record<ObjectiveKey, (value: number) => number>;
   metrics: Metrics;
   preferences: Preferences;
   aggregator: 'minmax' | 'tetra';
@@ -58,7 +59,10 @@ const initialDesign: DesignVector = {
 
 const initialMetrics = computeMetrics(initialDesign, defaultScenario);
 const initialPreferences = Object.fromEntries(
-  Object.entries(initialMetrics).map(([key, value]) => [key, Math.round(prefFns[key](value))])
+  Object.entries(initialMetrics).map(([key, value]) => {
+    const objectiveKey = key as ObjectiveKey;
+    return [objectiveKey, Math.round(prefFns[objectiveKey](value))];
+  })
 ) as Preferences;
 
 function renormalize(influences: number[], objectiveWeights: number[][]) {
@@ -111,7 +115,10 @@ export const useMoseStore = create<StoreState>((set, get) => ({
       const design = { ...state.design, ...partial };
       const metrics = computeMetrics(design, state.scenario);
       const preferences = Object.fromEntries(
-        Object.entries(metrics).map(([key, value]) => [key, Math.round(state.prefFns[key](value))])
+        Object.entries(metrics).map(([key, value]) => {
+          const objectiveKey = key as ObjectiveKey;
+          return [objectiveKey, Math.round(state.prefFns[objectiveKey](value))];
+        })
       ) as Preferences;
       return { design, metrics, preferences };
     });
@@ -121,7 +128,10 @@ export const useMoseStore = create<StoreState>((set, get) => ({
       const scenario = { ...state.scenario, ...partial } as ScenarioSettings;
       const metrics = computeMetrics(state.design, scenario);
       const preferences = Object.fromEntries(
-        Object.entries(metrics).map(([key, value]) => [key, Math.round(state.prefFns[key](value))])
+        Object.entries(metrics).map(([key, value]) => {
+          const objectiveKey = key as ObjectiveKey;
+          return [objectiveKey, Math.round(state.prefFns[objectiveKey](value))];
+        })
       ) as Preferences;
       return { scenario, metrics, preferences };
     });
@@ -131,7 +141,10 @@ export const useMoseStore = create<StoreState>((set, get) => ({
     set((state) => {
       const metrics = computeMetrics(state.design, state.scenario);
       const preferences = Object.fromEntries(
-        Object.entries(metrics).map(([key, value]) => [key, Math.round(state.prefFns[key](value))])
+        Object.entries(metrics).map(([key, value]) => {
+          const objectiveKey = key as ObjectiveKey;
+          return [objectiveKey, Math.round(state.prefFns[objectiveKey](value))];
+        })
       ) as Preferences;
       return { metrics, preferences };
     });
@@ -193,7 +206,10 @@ export const useMoseStore = create<StoreState>((set, get) => ({
     };
     const metrics = computeMetrics(design, defaultScenario);
     const preferences = Object.fromEntries(
-      Object.entries(metrics).map(([key, value]) => [key, Math.round(prefFnsLocal[key](value))])
+      Object.entries(metrics).map(([key, value]) => {
+        const objectiveKey = key as ObjectiveKey;
+        return [objectiveKey, Math.round(prefFnsLocal[objectiveKey](value))];
+      })
     ) as Preferences;
     set({
       config,
