@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <footer className="bg-white border-t border-slate-100 py-10">
             <div className="mx-auto max-w-6xl px-6 text-sm text-slate-500">
-              <p>Built for the MOSE Open Design Lab — explore, compare, and export insight-rich design narratives.</p>
+              <p>MOSE Project Interdisciplinary Mechanics and Design TU Delft, HOS group 1.</p>
             </div>
           </footer>
         </div>

@@ -133,6 +133,7 @@ export default function OptimizationPage() {
     stakeholderNames,
     stakeholderWeights,
     stakeholderRawInfluence,
+    stakeholderRawObjectiveWeights,
     prefFns,
     setStakeholderInfluences
   } = useMoseStore();
@@ -359,20 +360,25 @@ export default function OptimizationPage() {
 
   const [selectedPresetKey, setSelectedPresetKey] = useState<string>(activePreset.key);
   const [lastRun, setLastRun] = useState<string | null>(null);
+  const [displayResults, setDisplayResults] = useState<Record<'tetra' | 'minmax', StaticResult | null>>({
+    tetra: null,
+    minmax: null
+  });
   const [soloResultsState, setSoloResultsState] = useState<Record<string, PresetResults | null>>({});
 
   useEffect(() => {
     setSelectedPresetKey(activePreset.key);
     setLastRun(null);
+    setDisplayResults({ tetra: null, minmax: null });
   }, [activePreset.key]);
 
   const selectedPreset = WEIGHT_PRESETS.find((preset) => preset.key === selectedPresetKey) ?? WEIGHT_PRESETS[0];
   const presetResults = presetData[selectedPreset.key as PresetKey];
-  const tetraResult = presetResults?.tetra ?? null;
-  const minmaxResult = presetResults?.minmax ?? null;
+  const tetraResult = displayResults.tetra;
+  const minmaxResult = displayResults.minmax;
 
   const preferenceCurves = useMemo(() => {
-    if (!tetraResult || !minmaxResult) return [];
+    if (!tetraResult && !minmaxResult) return [];
     return objectives.map((objective) => {
       const domain = config.knots[objective].x;
       const min = domain[0];
@@ -390,14 +396,18 @@ export default function OptimizationPage() {
         samples,
         min,
         max,
-        tetraPoint: {
-          metric: clamp(tetraResult.metrics[objective]),
-          preference: tetraResult.preferences[objective]
-        },
-        minmaxPoint: {
-          metric: clamp(minmaxResult.metrics[objective]),
-          preference: minmaxResult.preferences[objective]
-        }
+        tetraPoint: tetraResult
+          ? {
+              metric: clamp(tetraResult.metrics[objective]),
+              preference: tetraResult.preferences[objective]
+            }
+          : null,
+        minmaxPoint: minmaxResult
+          ? {
+              metric: clamp(minmaxResult.metrics[objective]),
+              preference: minmaxResult.preferences[objective]
+            }
+          : null
       };
     });
   }, [config.knots, objectives, prefFns, tetraResult, minmaxResult]);
@@ -406,10 +416,18 @@ export default function OptimizationPage() {
     const preset = WEIGHT_PRESETS.find((item) => item.key === event.target.value) ?? WEIGHT_PRESETS[0];
     setSelectedPresetKey(preset.key);
     setLastRun(null);
+    setDisplayResults({ tetra: null, minmax: null });
     setStakeholderInfluences(Array.from(preset.values));
   };
 
   const handleRun = (paradigm: 'tetra' | 'minmax') => {
+    if (!presetResults) {
+      return;
+    }
+    setDisplayResults((prev) => ({
+      ...prev,
+      [paradigm]: presetResults[paradigm]
+    }));
     const presetLabel = selectedPreset.label;
     setLastRun(`${paradigm === 'tetra' ? 'Weighted (Tetra)' : 'Min–Max'} · ${presetLabel}`);
   };
@@ -481,6 +499,38 @@ export default function OptimizationPage() {
             </ul>
           </div>
         </div>
+        <div className="overflow-x-auto rounded-xl border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200 text-xs">
+            <thead className="bg-slate-50 text-slate-500">
+              <tr>
+                <th className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-slate-500">Stakeholder</th>
+                {objectives.map((objective) => (
+                  <th key={objective} className="px-3 py-2 text-left font-semibold uppercase tracking-wide text-slate-500">
+                    {OBJECTIVE_META[objective].label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {stakeholderNames.map((name: string, idx: number) => {
+                const weightsRow = stakeholderRawObjectiveWeights[idx] ?? [];
+                return (
+                  <tr key={name} className="odd:bg-slate-50">
+                    <td className="px-3 py-2 font-semibold text-slate-700">{name}</td>
+                    {objectives.map((objective, objectiveIdx) => {
+                      const weight = weightsRow[objectiveIdx] ?? 0;
+                      return (
+                        <td key={objective} className="px-3 py-2 text-slate-600">
+                          {(weight * 100).toFixed(0)}%
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <section className="card p-6 space-y-4">
@@ -524,56 +574,66 @@ export default function OptimizationPage() {
           The curves show how stakeholders score each performance aspect as the underlying metric changes. Markers highlight the latest weighted (Tetra)
           and Min–Max solutions so you can see where the optimisers land on each preference scale.
         </p>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {preferenceCurves.map(({ objective, samples, tetraPoint, minmaxPoint, min, max }) => {
-            const label = OBJECTIVE_META[objective].label;
-            return (
-              <article key={objective} className="space-y-3">
-                <h3 className="text-base font-semibold text-slate-700">{label}</h3>
-                <div className="h-40 w-full">
-                  <ResponsiveContainer>
-                    <LineChart data={samples} margin={{ left: 12, right: 12, top: 12, bottom: 12 }}>
-                      <XAxis
-                        dataKey="metric"
-                        tick={{ fill: '#475569', fontSize: 11 }}
-                        type="number"
-                        domain={[min, max]}
-                        label={{ value: 'Metric value', position: 'insideBottom', offset: -6, fill: '#475569', fontSize: 10 }}
-                      />
-                      <YAxis
-                        dataKey="preference"
-                        domain={[0, 100]}
-                        tick={{ fill: '#475569', fontSize: 11 }}
-                        label={{ value: 'Preference (0-100)', angle: -90, position: 'insideLeft', offset: 8, fill: '#475569', fontSize: 10 }}
-                      />
-                      <Tooltip
-                        formatter={(value: number) => `${value.toFixed(1)} preference`}
-                        labelFormatter={(value) => `${OBJECTIVE_META[objective].label}: ${Number(value).toLocaleString()}`}
-                      />
-                      <Line type="monotone" dataKey="preference" stroke="#0f60db" strokeWidth={2} dot={false} />
-                      <ReferenceDot
-                        x={tetraPoint.metric}
-                        y={tetraPoint.preference}
-                        r={6}
-                        fill="#0f766e"
-                        stroke="white"
-                        label={{ value: 'Tetra', position: 'top', fill: '#0f766e', fontSize: 10 }}
-                      />
-                      <ReferenceDot
-                        x={minmaxPoint.metric}
-                        y={minmaxPoint.preference}
-                        r={6}
-                        fill="#6366f1"
-                        stroke="white"
-                        label={{ value: 'Min–Max', position: 'bottom', fill: '#6366f1', fontSize: 10 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        {preferenceCurves.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {preferenceCurves.map(({ objective, samples, tetraPoint, minmaxPoint, min, max }) => {
+              const label = OBJECTIVE_META[objective].label;
+              return (
+                <article key={objective} className="space-y-3">
+                  <h3 className="text-base font-semibold text-slate-700">{label}</h3>
+                  <div className="h-40 w-full">
+                    <ResponsiveContainer>
+                      <LineChart data={samples} margin={{ left: 12, right: 12, top: 12, bottom: 12 }}>
+                        <XAxis
+                          dataKey="metric"
+                          tick={{ fill: '#475569', fontSize: 11 }}
+                          type="number"
+                          domain={[min, max]}
+                          label={{ value: 'Metric value', position: 'insideBottom', offset: -6, fill: '#475569', fontSize: 10 }}
+                        />
+                        <YAxis
+                          dataKey="preference"
+                          domain={[0, 100]}
+                          tick={{ fill: '#475569', fontSize: 11 }}
+                          label={{ value: 'Preference (0-100)', angle: -90, position: 'insideLeft', offset: 8, fill: '#475569', fontSize: 10 }}
+                        />
+                        <Tooltip
+                          formatter={(value: number) => `${value.toFixed(1)} preference`}
+                          labelFormatter={(value) => `${label}: ${Number(value).toLocaleString()}`}
+                        />
+                        <Line type="monotone" dataKey="preference" stroke="#0f60db" strokeWidth={2} dot={false} />
+                        {tetraPoint && (
+                          <ReferenceDot
+                            x={tetraPoint.metric}
+                            y={tetraPoint.preference}
+                            r={6}
+                            fill="#0f766e"
+                            stroke="white"
+                            label={{ value: 'Tetra', position: 'top', fill: '#0f766e', fontSize: 10 }}
+                          />
+                        )}
+                        {minmaxPoint && (
+                          <ReferenceDot
+                            x={minmaxPoint.metric}
+                            y={minmaxPoint.preference}
+                            r={6}
+                            fill="#6366f1"
+                            stroke="white"
+                            label={{ value: 'Min–Max', position: 'bottom', fill: '#6366f1', fontSize: 10 }}
+                          />
+                        )}
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">
+            Run one of the optimisation scenarios to overlay its results on the preference curves.
+          </p>
+        )}
       </section>
 
       <section className="card p-6 space-y-4">

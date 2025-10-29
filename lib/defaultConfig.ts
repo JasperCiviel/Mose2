@@ -58,7 +58,7 @@ export const defaultConfig = {
   ],
   knots: {
     initial_cost: { x: [5e8, 1e9, 2e9, 3.5e9, 8e9], y: [100, 95, 90, 30, 0] },
-    maintenance_cost: { x: [5e8, 6e9, 1.4e10], y: [100, 40, 0] },
+    maintenance_cost: { x: [1e10, 1e12, 1.5e12], y: [100, 40, 0] },
     sight: { x: [0, 5, 10], y: [0, 50, 100] },
     accessibility: { x: [0, 5, 10], y: [0, 50, 100] },
     water_quality: { x: [0, 5, 10], y: [0, 50, 100] },
