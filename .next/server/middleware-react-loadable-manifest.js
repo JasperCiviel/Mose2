@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST="{\"components/sections/BarrierMap.tsx -> ../ui/BarrierMapInner\":{\"id\":\"components/sections/BarrierMap.tsx -> ../ui/BarrierMapInner\",\"files\":[\"static/chunks/_app-pages-browser_components_ui_BarrierMapInner_tsx.js\"]}}"

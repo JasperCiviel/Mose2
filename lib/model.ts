@@ -66,8 +66,9 @@ export function computeMetrics(design: DesignVector, _scenario: ScenarioSettings
 
   const movableMaintenancePerMeter = 1.25e6 + 4.8e5 * x2 + 1.5e6 / Math.pow(minClosing, 1.2);
   const fixedMaintenancePerMeter = 8.5e4 + 2.2e4 * x2;
-  const maintenanceCost =
-    movableMaintenancePerMeter * movableLength + fixedMaintenancePerMeter * fixedLength;
+  const movableMaintenanceCost = movableMaintenancePerMeter * movableLength * 180; // cycles per notebook model
+  const fixedMaintenanceCost = fixedMaintenancePerMeter * fixedLength * 55;
+  const maintenanceCost = movableMaintenanceCost + fixedMaintenanceCost;
 
   const movableFraction = totalLength === 0 ? 0 : Math.max(0, Math.min(1, movableLength / totalLength));
   const fixedFraction = 1 - movableFraction;

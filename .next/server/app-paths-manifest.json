@@ -1,11 +1,5 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/design/page": "app/design/page.js",
-  "/ethics/page": "app/ethics/page.js",
-  "/opt/page": "app/opt/page.js",
-  "/rnd/page": "app/rnd/page.js",
   "/page": "app/page.js",
-  "/appendix/page": "app/appendix/page.js",
-  "/stakeholders/page": "app/stakeholders/page.js",
-  "/tetra/page": "app/tetra/page.js"
+  "/design/page": "app/design/page.js"
 }
